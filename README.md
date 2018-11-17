@@ -107,4 +107,106 @@ Now create the database:
 ```
 docker-compose run web rails db:create
 ```
-Visit *localhost:3000* and see the skeleton Rails app is running.
+Visit *localhost:3000* and see the skeleton Rails app is running.</br>
+Note: To stop the app use `docker-compose down` and restart it with `docker-compose up`</br>
+Check PGAdmin is functional at *localhost:5050* and login using the username and password in the `docker-compose.yml`</br>
+
+## Customising the App to Support Users
+Create a controller for a homepage with an index action (with associated view):
+```
+docker-compose run web rails g controller Homepage index
+```
+Add a root route:
+```
+Rails.application.routes.draw do
+  root to: 'homepage#index'
+end
+```
+Visit *localhost:3000* to see the new homepage.</br>
+Add the Devise gem to the `Gemfile`:
+```
+# For user authentication
+gem 'devise', '~> 4.3'
+```
+Install the new gem:
+```
+docker-compose run web bundle install
+```
+When updating the `Gemfile` you need to rebuild with:
+```
+docker-compose build
+```
+Run devise generator (read the instruction output):
+```
+docker-compose run web rails generate devise:install
+```
+Add the following to config/environments/development.rb:
+```
+# define default url options for mailer
+config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }
+```
+Ensure flash messages are enabled in `app/views/layouts/application.html.erb`:
+```
+...
+<body>
+  <p class="notice"><%= notice %></p>
+  <p class="alert"><%= alert %></p>
+  <%= yield %>
+</body>
+...
+```
+Generate the user views so they can be customised in the future:
+```
+docker-compose run web rails g devise:views
+```
+Add users with the Devise generator (it generates a use migration file, users routes and more):
+```
+docker-compose run web rails generate devise User
+```
+Update the migration file `<timestamp>_devise_create_users.rb` to include firstname and lastname columns:
+```
+create_table :users do |t|
+ ## Adding our own addtional columns to the User table
+  t.string :first_name, null: false
+  t.string :last_name, null: false
+
+  ## Database authenticatable
+  t.string :email,              null: false, default: ""
+  t.string :encrypted_password, null: false, default: ""
+  ...
+```
+Run database migrations:
+```
+docker-compose run web rails db:migrate
+```
+Create a default development user, in the `db/seeds.rb`:
+```
+if Rails.env.development?
+    User.create!(first_name: 'Harry', last_name: 'Potter', email: 'harrypotter@example.com', password: 'password1', password_confirmation: 'password1')
+end
+```
+Seed the development database:
+```
+docker-compose run web rails db:seed
+```
+Need to restart the web app service with:
+```
+docker-compose down
+docker-compose up
+```
+Visit *localhost:3000* and login with the seed username and password.</br>
+Awesome the app is running with a database and a UI for administering the DB!</br>
+
+## Publish the Rails Docker Boilerplate to Docker Hub
+Log in to Docker Hub:
+```
+docker login
+```
+List the current docker processes running:
+```
+docker ps
+```
+Copy the ID for the `rails-docker-boilerplate_web` image and tag the image:
+```
+docker tag <CONTAINER_ID> <DOCKER_HUB_ID>/rails-docker-boilerplate:1.0
+```
