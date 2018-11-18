@@ -39,6 +39,16 @@ services:
       - postgres
     restart: unless-stopped
 
+  jenkins:
+    container_name: jenkins_container
+    image: 'bitnami/jenkins:latest'
+    ports:
+      - '80:8080'
+      - '443:8443'
+      - '50000:50000'
+    volumes:
+      - 'jenkins_data:/bitnami/jenkins'
+
 networks:
   postgres:
     driver: bridge
@@ -46,3 +56,4 @@ networks:
 volumes:
     postgres:
     pgadmin:
+    jenkins_data:

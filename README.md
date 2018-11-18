@@ -249,3 +249,47 @@ Add the following to `controllers/application_controller.rb` to track users that
 ```
 before_action :set_paper_trail_whodunnit
 ```
+
+## Adding RSpec and Jenkins for Automated Testing
+Add to the `Gemfile` into the group :development, :test do:
+```
+# TDD testing
+gem 'rspec-rails'
+```
+Rebuild as we updated the `Gemfile`:
+```
+docker-compose build
+```
+Generate the RSpec configuration:
+```
+docker-compose run web rails generate rspec:install
+```
+Ensure the correct version of RSpec is used:
+```
+docker-compose run web bundle binstubs rspec-core
+```
+
+Create a new folder `spec/features` and a new file inside it `homepage_spec.rb`.</br>
+Add the following to this file:
+```
+require 'rails_helper'
+
+RSpec.feature "Creating Home Page" do
+  scenario do
+    visit '/'
+
+    expect(page).to have_content('Home')
+    expect(page).to have_link('Sign In')
+    expect(page).to have_link('Sign Up')
+    expect(page).to have_link('All Posts')
+  end
+end
+```
+Now update the `app/views/homepage/index.html.erb` to:
+```
+<%= link_to 'Sign In', new_user_session_path, { class: "" } %>
+<%= link_to 'Sign Up', new_user_registration_path, { class: "" } %>
+</br>
+<%= link_to 'All Posts', posts_path, { class: "" } %>
+```
+This will mean we have a failing test, as the homepage doesn't have content of 'Home'.
