@@ -157,7 +157,7 @@ Ensure flash messages are enabled in `app/views/layouts/application.html.erb`:
 ```
 Generate the user views so they can be customised in the future:
 ```
-docker-compose run web rails g devise:views
+docker-compose run web rails generate devise:views
 ```
 Add users with the Devise generator (it generates a use migration file, users routes and more):
 ```
@@ -209,4 +209,43 @@ docker ps
 Copy the ID for the `rails-docker-boilerplate_web` image and tag the image:
 ```
 docker tag <CONTAINER_ID> <DOCKER_HUB_ID>/rails-docker-boilerplate:1.0
+```
+
+## Adding Audit Capabilities
+Add PaperTrail gem to the `Gemfile`:
+```
+# For audit
+gem 'paper_trail', '~> 9.2'
+```
+Run bundle install:
+```
+docker-compose run web bundle install
+```
+Rebuild as we updated the `Gemfile`:
+```
+docker-compose build
+```
+Add a versions table to the database:
+```
+docker-compose run web rails generate paper_trail:install
+```
+Run the migrations:
+```
+docker-compose run web rails db:migrate
+```
+Generate a scaffold for Posts:
+```
+docker-compose run web rails generate scaffold Post title:string content:text
+```
+Run the migrations:
+```
+docker-compose run web rails db:migrate
+```
+As we intend to audit Posts, add to `models/post.rb`:
+```
+has_paper_trail
+```
+Add the following to `controllers/application_controller.rb` to track users that made changes:
+```
+before_action :set_paper_trail_whodunnit
 ```
